@@ -1,0 +1,15 @@
+[Unit]
+Description=Edição de Vídeo API Proxy
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/var/www/design.duobro.com.br/api
+Environment=NOCODB_TOKEN=nc_pat_seu_token_aqui
+ExecStart=/usr/bin/node /var/www/design.duobro.com.br/api/server.js
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

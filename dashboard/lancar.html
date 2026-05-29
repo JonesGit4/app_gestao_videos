@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lançar Vídeos — Edição</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0f1117; color: #e1e4e8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.card { background: #161b22; border: 1px solid #21262d; border-radius: 16px; padding: 32px; width: 100%; max-width: 420px; }
+h1 { font-size: 20px; margin-bottom: 4px; }
+.sub { color: #8b949e; font-size: 13px; margin-bottom: 24px; }
+label { display: block; font-size: 13px; color: #8b949e; margin-bottom: 6px; margin-top: 16px; }
+select, input { width: 100%; padding: 10px 12px; background: #0d1117; border: 1px solid #30363d; border-radius: 8px; color: #e1e4e8; font-size: 14px; outline: none; transition: border-color .2s; -webkit-appearance: none; }
+select:focus, input:focus { border-color: #58a6ff; }
+select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238b949e' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+button { width: 100%; margin-top: 20px; padding: 12px; background: #238636; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background .2s; }
+button:hover { background: #2ea043; }
+button:disabled { background: #21262d; color: #484f58; cursor: not-allowed; }
+.msg { margin-top: 14px; padding: 10px 14px; border-radius: 8px; font-size: 13px; display: none; }
+.msg.ok { display: block; background: #0d3320; color: #3fb950; border: 1px solid #1a4a2e; }
+.msg.err { display: block; background: #3d1117; color: #f85149; border: 1px solid #5c1a1a; }
+.link { display: block; text-align: center; margin-top: 16px; color: #58a6ff; font-size: 13px; text-decoration: none; }
+.link:hover { text-decoration: underline; }
+.spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid transparent; border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite; margin-right: 6px; vertical-align: middle; }
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>🎬 Lançar Vídeos</h1>
+  <p class="sub">Registre quantos vídeos fez hoje por cliente</p>
+
+  <label>Cliente</label>
+  <select id="cliente" required>
+    <option value="">Carregando...</option>
+  </select>
+
+  <label>Data</label>
+  <input type="date" id="data" required>
+
+  <label>Quantidade de vídeos</label>
+  <input type="number" id="qtd" min="1" max="200" placeholder="Ex: 3" required>
+
+  <button id="btn" onclick="lancar()">🚀 Lançar</button>
+  <div id="msg" class="msg"></div>
+
+  <a class="link" href="/dashboard/edicao-video.html">📊 Ver Dashboard →</a>
+</div>
+
+<script>
+document.getElementById('data').valueAsDate = new Date();
+
+async function init() {
+  const sel = document.getElementById('cliente');
+  try {
+    const res = await fetch('/api/clientes');
+    const data = await res.json();
+    sel.innerHTML = '<option value="">Selecione o cliente...</option>';
+    data.list.forEach(c => {
+      sel.innerHTML += `<option value="${c.Id}">${c.Nome}</option>`;
+    });
+  } catch(e) {
+    sel.innerHTML = '<option value="">Erro ao carregar</option>';
+  }
+}
+
+async function lancar() {
+  const cliente = document.getElementById('cliente').value;
+  const data = document.getElementById('data').value;
+  const qtd = document.getElementById('qtd').value;
+  const btn = document.getElementById('btn');
+  const msg = document.getElementById('msg');
+
+  if (!cliente || !data || !qtd || qtd < 1) {
+    msg.className = 'msg err';
+    msg.textContent = 'Preencha todos os campos.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Lançando...';
+  msg.className = 'msg';
+
+  try {
+    const res = await fetch('/api/entregas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        cliente: parseInt(cliente),
+        data: data,
+        quantidade: parseInt(qtd),
+        mes: data.substring(0, 7)
+      })
+    });
+
+    if (!res.ok) throw new Error('Erro ao salvar');
+
+    const sel = document.getElementById('cliente');
+    const nome = sel.options[sel.selectedIndex].text;
+
+    msg.className = 'msg ok';
+    msg.innerHTML = `✅ <strong>${qtd} vídeos</strong> lançados para <strong>${nome}</strong> em ${new Date(data+'T00:00:00').toLocaleDateString('pt-BR')}`;
+
+    document.getElementById('qtd').value = '';
+    document.getElementById('qtd').focus();
+
+  } catch(e) {
+    msg.className = 'msg err';
+    msg.textContent = 'Erro ao lançar. Tente novamente.';
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '🚀 Lançar';
+}
+
+init();
+</script>
+</body>
+</html>

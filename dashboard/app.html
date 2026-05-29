@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Edição de Vídeo — App</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0f1117; color: #e1e4e8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; padding: 20px; }
+.container { max-width: 480px; margin: 0 auto; }
+h1 { font-size: 20px; margin-bottom: 4px; }
+.sub { color: #8b949e; font-size: 13px; margin-bottom: 20px; }
+
+/* Tabs */
+.tabs { display: flex; gap: 0; margin-bottom: 24px; background: #161b22; border-radius: 10px; padding: 4px; }
+.tab { flex: 1; text-align: center; padding: 10px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; color: #8b949e; transition: all .2s; border: none; background: none; }
+.tab.active { background: #21262d; color: #e1e4e8; font-weight: 600; }
+
+/* Cards */
+.card { background: #161b22; border: 1px solid #21262d; border-radius: 16px; padding: 28px; }
+label { display: block; font-size: 13px; color: #8b949e; margin-bottom: 5px; margin-top: 14px; }
+label:first-child { margin-top: 0; }
+select, input { width: 100%; padding: 10px 12px; background: #0d1117; border: 1px solid #30363d; border-radius: 8px; color: #e1e4e8; font-size: 14px; outline: none; transition: border-color .2s; -webkit-appearance: none; }
+select:focus, input:focus { border-color: #58a6ff; }
+select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238b949e' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+input[type=checkbox] { width: auto; margin-right: 8px; accent-color: #238636; }
+.check-row { display: flex; align-items: center; margin-top: 14px; }
+.check-row label { margin: 0; display: inline; }
+
+.row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.row label { margin-top: 14px; }
+
+button { width: 100%; margin-top: 18px; padding: 12px; background: #238636; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background .2s; }
+button:hover { background: #2ea043; }
+button:disabled { background: #21262d; color: #484f58; cursor: not-allowed; }
+.btn-outline { background: transparent; border: 1px solid #30363d; color: #e1e4e8; }
+.btn-outline:hover { background: #21262d; }
+
+.msg { margin-top: 14px; padding: 10px 14px; border-radius: 8px; font-size: 13px; display: none; }
+.msg.ok { display: block; background: #0d3320; color: #3fb950; border: 1px solid #1a4a2e; }
+.msg.err { display: block; background: #3d1117; color: #f85149; border: 1px solid #5c1a1a; }
+
+.link-row { display: flex; gap: 10px; margin-top: 16px; justify-content: center; }
+.link-row a { color: #58a6ff; font-size: 13px; text-decoration: none; }
+.link-row a:hover { text-decoration: underline; }
+
+.spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid transparent; border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite; margin-right: 6px; vertical-align: middle; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.panel { display: none; }
+.panel.active { display: block; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🎬 Edição de Vídeo</h1>
+  <p class="sub">Lançamento diário e cadastro de clientes</p>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('lancar')">🎬 Lançar</button>
+    <button class="tab" onclick="switchTab('cliente')">👤 Cliente</button>
+  </div>
+
+  <!-- PANEL: LANÇAR -->
+  <div id="panel-lancar" class="panel active">
+    <div class="card">
+      <label>Cliente</label>
+      <select id="l-cliente" required><option value="">Carregando...</option></select>
+
+      <label>Data</label>
+      <input type="date" id="l-data" required>
+
+      <label>Quantidade de vídeos</label>
+      <input type="number" id="l-qtd" min="1" max="200" placeholder="Ex: 3" required>
+
+      <button id="btn-lancar" onclick="lancar()">🚀 Lançar</button>
+      <div id="msg-lancar" class="msg"></div>
+    </div>
+  </div>
+
+  <!-- PANEL: CADASTRAR CLIENTE -->
+  <div id="panel-cliente" class="panel">
+    <div class="card">
+      <label>Nome do cliente</label>
+      <input type="text" id="c-nome" placeholder="Ex: Agência XPTO" required>
+
+      <div class="check-row">
+        <input type="checkbox" id="c-contrato" checked>
+        <label for="c-contrato">Possui contrato</label>
+      </div>
+
+      <div class="row">
+        <div><label>Meta Diária</label><input type="number" id="c-diaria" min="0" value="2"></div>
+        <div><label>Meta Semanal</label><input type="number" id="c-semanal" min="0" value="10"></div>
+        <div><label>Meta Mensal</label><input type="number" id="c-mensal" min="0" value="60"></div>
+      </div>
+
+      <button id="btn-cliente" onclick="cadastrarCliente()">💾 Salvar Cliente</button>
+      <div id="msg-cliente" class="msg"></div>
+    </div>
+  </div>
+
+  <!-- LINKS -->
+  <div class="link-row">
+    <a href="/dashboard/edicao-video.html">📊 Ver Dashboard →</a>
+  </div>
+</div>
+
+<script>
+// === TABS ===
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelector(`.tab:nth-child(${name==='lancar'?1:2})`).classList.add('active');
+  document.getElementById(`panel-${name}`).classList.add('active');
+  if (name === 'lancar') carregarClientes();
+}
+
+// === SETUP ===
+document.getElementById('l-data').valueAsDate = new Date();
+
+// === CARREGAR CLIENTES NO SELECT ===
+async function carregarClientes() {
+  const sel = document.getElementById('l-cliente');
+  try {
+    const res = await fetch('/api/clientes');
+    const data = await res.json();
+    sel.innerHTML = '<option value="">Selecione o cliente...</option>';
+    data.list.forEach(c => {
+      sel.innerHTML += `<option value="${c.Id}">${c.Nome}</option>`;
+    });
+  } catch(e) {
+    sel.innerHTML = '<option value="">Erro ao carregar</option>';
+  }
+}
+
+// === LANÇAR VÍDEO ===
+async function lancar() {
+  const cliente = document.getElementById('l-cliente').value;
+  const data = document.getElementById('l-data').value;
+  const qtd = document.getElementById('l-qtd').value;
+  const btn = document.getElementById('btn-lancar');
+  const msg = document.getElementById('msg-lancar');
+
+  if (!cliente || !data || !qtd || qtd < 1) {
+    msg.className = 'msg err';
+    msg.textContent = 'Preencha todos os campos.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Lançando...';
+  msg.className = 'msg';
+
+  try {
+    const res = await fetch('/api/entregas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        cliente: parseInt(cliente),
+        data: data,
+        quantidade: parseInt(qtd),
+        mes: data.substring(0, 7)
+      })
+    });
+
+    if (!res.ok) throw new Error('Erro');
+
+    const sel = document.getElementById('l-cliente');
+    const nome = sel.options[sel.selectedIndex].text;
+    msg.className = 'msg ok';
+    msg.innerHTML = `✅ <strong>${qtd} vídeos</strong> → <strong>${nome}</strong> em ${new Date(data+'T00:00:00').toLocaleDateString('pt-BR')}`;
+    document.getElementById('l-qtd').value = '';
+    document.getElementById('l-qtd').focus();
+  } catch(e) {
+    msg.className = 'msg err';
+    msg.textContent = 'Erro ao lançar. Tente novamente.';
+  }
+  btn.disabled = false;
+  btn.innerHTML = '🚀 Lançar';
+}
+
+// === CADASTRAR CLIENTE ===
+async function cadastrarCliente() {
+  const nome = document.getElementById('c-nome').value.trim();
+  const contrato = document.getElementById('c-contrato').checked;
+  const diaria = parseInt(document.getElementById('c-diaria').value) || 0;
+  const semanal = parseInt(document.getElementById('c-semanal').value) || 0;
+  const mensal = parseInt(document.getElementById('c-mensal').value) || 0;
+  const btn = document.getElementById('btn-cliente');
+  const msg = document.getElementById('msg-cliente');
+
+  if (!nome) {
+    msg.className = 'msg err';
+    msg.textContent = 'Digite o nome do cliente.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Salvando...';
+  msg.className = 'msg';
+
+  try {
+    const res = await fetch('/api/clientes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nome: nome,
+        contrato: contrato,
+        diaria: diaria,
+        semanal: semanal,
+        mensal: mensal
+      })
+    });
+
+    if (!res.ok) throw new Error('Erro');
+
+    msg.className = 'msg ok';
+    msg.innerHTML = `✅ <strong>${nome}</strong> cadastrado! ${contrato ? '📄 Com contrato' : '📝 Sem contrato'}`;
+
+    // Limpar
+    document.getElementById('c-nome').value = '';
+    document.getElementById('c-contrato').checked = true;
+    document.getElementById('c-diaria').value = 2;
+    document.getElementById('c-semanal').value = 10;
+    document.getElementById('c-mensal').value = 60;
+    document.getElementById('c-nome').focus();
+
+    // Recarregar select da aba lançar
+    carregarClientes();
+
+  } catch(e) {
+    msg.className = 'msg err';
+    msg.textContent = 'Erro ao cadastrar. Tente novamente.';
+  }
+  btn.disabled = false;
+  btn.innerHTML = '💾 Salvar Cliente';
+}
+
+// Init
+carregarClientes();
+</script>
+</body>
+</html>

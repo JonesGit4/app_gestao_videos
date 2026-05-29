@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Edição de Vídeo — Dashboard</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0f1117; color: #e1e4e8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 24px; min-height: 100vh; }
+h1 { font-size: 22px; margin-bottom: 4px; }
+.subtitle { color: #8b949e; font-size: 13px; margin-bottom: 24px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
+.card { background: #161b22; border: 1px solid #21262d; border-radius: 12px; padding: 20px; }
+.card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+.card-name { font-size: 16px; font-weight: 600; }
+.card-contrato { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: #21262d; color: #8b949e; }
+.gauge-row { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; }
+.gauge { position: relative; width: 70px; height: 70px; flex-shrink: 0; }
+.gauge svg { transform: rotate(-90deg); }
+.gauge-bg { fill: none; stroke: #21262d; stroke-width: 6; }
+.gauge-fill { fill: none; stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset 0.6s ease; }
+.gauge-num { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; }
+.stats { flex: 1; }
+.stat-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; }
+.stat-val { font-weight: 600; }
+.bar-wrap { height: 6px; background: #21262d; border-radius: 3px; margin-top: 8px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+.meta-info { margin-top: 10px; display: flex; gap: 12px; font-size: 11px; color: #8b949e; }
+.loading { text-align: center; padding: 60px; color: #8b949e; }
+.error { color: #f85149; text-align: center; padding: 20px; }
+.refresh { position: fixed; bottom: 20px; right: 20px; background: #238636; color: #fff; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 12px; }
+</style>
+</head>
+<body>
+<div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:10px">
+<div><h1>📊 Produção × Contrato</h1>
+<p class="subtitle">Índice: 1 = muito abaixo · 3 = no contrato · 5 = muito acima</p></div>
+<a href="/dashboard/app.html" style="background:#238636;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;white-space:nowrap">➕ App (Lançar + Clientes)</a>
+</div>
+<div class="grid" id="grid"><div class="loading">Carregando dados...</div></div>
+<button class="refresh" onclick="load()">🔄 Atualizar</button>
+
+<script>
+const COLORS = {1:'#f85149', 2:'#d29922', 3:'#e3b341', 4:'#3fb950', 5:'#58a6ff'};
+const LABELS = {1:'Muito Abaixo', 2:'Abaixo', 3:'No Contrato', 4:'Acima', 5:'Muito Acima'};
+
+async function load() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '<div class="loading">Carregando...</div>';
+  try {
+    const res = await fetch('/api/dashboard');
+    const data = await res.json();
+    render(data.list);
+  } catch(e) {
+    grid.innerHTML = `<div class="error">Erro: ${e.message}</div>`;
+  }
+}
+
+function render(clients) {
+  const grid = document.getElementById('grid');
+  if (!clients.length) { grid.innerHTML = '<div class="loading">Nenhum cliente cadastrado.</div>'; return; }
+
+  grid.innerHTML = clients.map(c => {
+    const f = c;
+    const total = f['Total de Entregas'] || 0;
+    const metaMensal = f['Meta Mensal'] || 0;
+    const metaSemanal = f['Meta Semanal'] || 0;
+    const metaDiaria = f['Meta Diária'] || 0;
+    const hasContract = f['Possui Contrato'];
+    const hasMetaMensal = hasContract && metaMensal > 0;
+
+    // Calcular indicadores
+    let indice, pct, color, label;
+    if (hasMetaMensal) {
+      pct = f['% da Meta'] || 0;
+      indice = f['Índice'] || 0;
+      color = COLORS[indice] || '#8b949e';
+      label = LABELS[indice] || '';
+    } else if (hasContract) {
+      // Contrato sem meta mensal — calcular contra meta semanal
+      pct = metaSemanal > 0 ? Math.round(total / metaSemanal * 100) : 0;
+      indice = pct < 50 ? 1 : pct < 75 ? 2 : pct <= 100 ? 3 : pct <= 150 ? 4 : 5;
+      color = COLORS[indice];
+      label = LABELS[indice];
+    } else {
+      pct = 0; indice = 0; color = '#8b949e'; label = 'Sem contrato';
+    }
+
+    const circumference = 2 * Math.PI * 28;
+    const offset = hasContract ? circumference * (1 - Math.min(Math.max(pct, 0)/200, 1)) : circumference;
+
+    const gaugeNum = hasContract ? (hasMetaMensal ? indice : pct + '%') : '—';
+    const gaugeColor = hasContract ? color : '#484f58';
+
+    return `
+    <div class="card">
+      <div class="card-header">
+        <div class="card-name">${f.Nome}</div>
+        <div class="card-contrato">${hasContract ? (hasMetaMensal ? '📄 Contrato' : '📄 Contrato diário/semanal') : '📝 Avulso'}</div>
+      </div>
+      <div class="gauge-row">
+        <div class="gauge">
+          <svg viewBox="0 0 70 70" width="70" height="70">
+            <circle class="gauge-bg" cx="35" cy="35" r="28"/>
+            ${hasContract ? `<circle class="gauge-fill" cx="35" cy="35" r="28" 
+              stroke="${gaugeColor}" stroke-dasharray="${circumference}" stroke-dashoffset="${offset}"/>` : ''}
+          </svg>
+          <div class="gauge-num" style="color:${gaugeColor}; font-size:${hasMetaMensal ? '24px' : '18px'}">${gaugeNum}</div>
+        </div>
+        <div class="stats">
+          <div class="stat-row"><span>Entregue</span><span class="stat-val">${total} vídeos</span></div>
+          ${hasMetaMensal
+            ? `<div class="stat-row"><span>Meta mensal</span><span class="stat-val">${metaMensal} vídeos</span></div>
+               <div class="stat-row"><span>% da meta</span><span class="stat-val" style="color:${color}">${pct}%</span></div>`
+            : `<div class="stat-row"><span>Meta semanal</span><span class="stat-val">${metaSemanal} vídeos</span></div>
+               <div class="stat-row"><span>% da semanal</span><span class="stat-val" style="color:${color}">${pct}%</span></div>`
+          }
+          <div class="bar-wrap"><div class="bar-fill" style="width:${Math.min(Math.max(pct, 0), 200)}%; background:${color}"></div></div>
+        </div>
+      </div>
+      <div style="font-size:13px;font-weight:600;margin-top:4px;color:${color}">
+        ${hasMetaMensal ? `Índice ${indice} — ${label}`
+          : hasContract ? `${label} (vs meta semanal)`
+          : 'Sem contrato — sem meta definida'}
+      </div>
+      <div class="meta-info">
+        <span>📅 Diária: ${metaDiaria || '—'}</span>
+        <span>📆 Semanal: ${metaSemanal || '—'}</span>
+        ${hasMetaMensal ? `<span>📊 Mensal: ${metaMensal}</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+load();
+</script>
+</body>
+</html>
