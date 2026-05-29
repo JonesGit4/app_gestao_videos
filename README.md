@@ -3,6 +3,11 @@
 App para o Artur lançar e acompanhar produção diária de vídeos por cliente.
 
 **Stack:** HTML estático + Node.js API proxy + NocoDB (backend)
+<img width="633" height="618" alt="image" src="https://github.com/user-attachments/assets/82a664dd-64c7-403b-bdfe-5c157ddb2788" />
+
+<img width="626" height="654" alt="image" src="https://github.com/user-attachments/assets/3d0ca6b9-d36d-4146-a116-2417474556de" />
+
+
 <img width="961" height="389" alt="image" src="https://github.com/user-attachments/assets/7691486d-a66c-4747-84b8-954de4a41f8d" />
 
 ## Arquitetura
