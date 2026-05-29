@@ -23,7 +23,10 @@ label:first-child { margin-top: 0; }
 select, input { width: 100%; padding: 10px 12px; background: #0d1117; border: 1px solid #30363d; border-radius: 8px; color: #e1e4e8; font-size: 14px; outline: none; transition: border-color .2s; -webkit-appearance: none; }
 select:focus, input:focus { border-color: #58a6ff; }
 select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238b949e' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
-input[type=checkbox] { width: auto; margin-right: 8px; accent-color: #238636; }
+input[type=checkbox] {
+  width: 18px; height: 18px; margin-right: 8px; accent-color: #3fb950;
+  cursor: pointer; vertical-align: middle;
+}
 .check-row { display: flex; align-items: center; margin-top: 14px; }
 .check-row label { margin: 0; display: inline; }
 
@@ -46,8 +49,8 @@ button:disabled { background: #21262d; color: #484f58; cursor: not-allowed; }
 
 .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid transparent; border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite; margin-right: 6px; vertical-align: middle; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.panel { display: none; }
-.panel.active { display: block; }
+.panel { display: none !important; }
+.panel.active { display: block !important; }
 </style>
 </head>
 <body>
